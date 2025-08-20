@@ -24,6 +24,8 @@ namespace DXApplication4.Module.BusinessObjects
         public DbSet<DXApplication4.Module.BusinessObjects.ApplicationUserLoginInfo> UserLoginsInfo { get; set; }
 
         public DbSet<Book> Books { get; set; }
+        public DbSet<Member> Members { get; set; }
+        public DbSet<Loan> Loans { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -40,7 +42,27 @@ namespace DXApplication4.Module.BusinessObjects
                 .HasMany(t => t.Aspects)
                 .WithOne(t => t.Owner)
                 .OnDelete(DeleteBehavior.Cascade);
-            modelBuilder.Entity<Book>();
+            modelBuilder.Entity<Book>(b =>
+            {
+                b.HasIndex(x => x.ISBN).IsUnique(); 
+            });
+            modelBuilder.Entity<Member>(b =>
+            {
+                b.HasIndex(x => x.Email)
+                 .IsUnique()
+                 .HasFilter("[Email] IS NOT NULL"); 
+            });
+            modelBuilder.Entity<Loan>(b =>
+            {
+                b.HasOne(l => l.Kitap)
+                 .WithMany(k => k.Loans)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasOne(l => l.Uye)
+                 .WithMany(m => m.Loans)
+                 .OnDelete(DeleteBehavior.Restrict);
+            });
+
         }
     }
 }

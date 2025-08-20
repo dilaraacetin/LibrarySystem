@@ -1,31 +1,48 @@
 ﻿using DevExpress.ExpressApp.DC;
 using DevExpress.Persistent.Base;
 using DevExpress.Persistent.BaseImpl.EF;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
+using DevExpress.Persistent.Validation;
+using DevExpress.ExpressApp.Model;                 
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
-namespace DXApplication4.Module.BusinessObjects  
+using DARequired = System.ComponentModel.DataAnnotations.RequiredAttribute;
+
+namespace DXApplication4.Module.BusinessObjects
 {
+    public enum KitapDurum { Available = 0, Borrowed = 1, Lost = 2, Damaged = 3 }
+
     [DefaultClassOptions]
     [NavigationItem("Library")]
     [XafDisplayName("Book")]
-    public class Book : BaseObject  
+    [XafDefaultProperty(nameof(Ad))]
+    public class Book : BaseObject
     {
-        [Required, StringLength(256)]
-        public virtual string Title { get; set; }
+        [XafDisplayName("Ad")]
+        [DARequired, StringLength(256)]             
+        public virtual string Ad { get; set; }
 
+        [XafDisplayName("Yazar")]
         [StringLength(256)]
-        public virtual string Author { get; set; }
+        public virtual string Yazar { get; set; }
 
+        [XafDisplayName("Yayın Yılı")]
+        [ModelDefault("EditMask", "D0")]
+        [ModelDefault("DisplayFormat", "{0:D0}")]
+        [RuleRange("Book.YayinYili.Range", DefaultContexts.Save, 0, 2025)]
+        [Range(0, 2025, ErrorMessage = "Yayın yılı 0–2025 aralığında olmalı.")]
+        public virtual int? YayinYili { get; set; }
+
+        [XafDisplayName("ISBN")]
         [StringLength(32)]
-        public virtual string Isbn { get; set; }
+        [RuleUniqueValue("Book.ISBN.Unique", DefaultContexts.Save, CustomMessageTemplate = "Bu ISBN zaten kayıtlı.")]
+        public virtual string ISBN { get; set; }
 
-        public virtual DateTime? PublishedOn { get; set; }
+        [XafDisplayName("Durum")]
+        public virtual KitapDurum Durum { get; set; } = KitapDurum.Available;
 
+        public virtual ObservableCollection<Loan> Loans { get; set; }
+            = new ObservableCollection<Loan>();
     }
 }
