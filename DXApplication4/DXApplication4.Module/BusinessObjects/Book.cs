@@ -1,11 +1,12 @@
 ﻿using DevExpress.ExpressApp.DC;
+using DevExpress.ExpressApp.Model;            
 using DevExpress.Persistent.Base;
 using DevExpress.Persistent.BaseImpl.EF;
+using DevExpress.Persistent.BaseImpl.EFCore; 
 using DevExpress.Persistent.Validation;
-using DevExpress.ExpressApp.Model;                 
-using System.ComponentModel.DataAnnotations;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 using DARequired = System.ComponentModel.DataAnnotations.RequiredAttribute;
 
@@ -20,7 +21,7 @@ namespace DXApplication4.Module.BusinessObjects
     public class Book : BaseObject
     {
         [XafDisplayName("Ad")]
-        [DARequired, StringLength(256)]             
+        [DARequired, StringLength(256)]
         public virtual string Ad { get; set; }
 
         [XafDisplayName("Yazar")]
@@ -36,12 +37,14 @@ namespace DXApplication4.Module.BusinessObjects
 
         [XafDisplayName("ISBN")]
         [StringLength(32)]
-        [RuleUniqueValue("Book.ISBN.Unique", DefaultContexts.Save, CustomMessageTemplate = "Bu ISBN zaten kayıtlı.")]
+        [RuleUniqueValue("Book.ISBN.Unique", DefaultContexts.Save,
+            CustomMessageTemplate = "Bu ISBN zaten kayıtlı.")]
         public virtual string ISBN { get; set; }
 
         [XafDisplayName("Durum")]
         public virtual KitapDurum Durum { get; set; } = KitapDurum.Available;
 
+        [InverseProperty(nameof(Loan.Kitap))]
         public virtual ObservableCollection<Loan> Loans { get; set; }
             = new ObservableCollection<Loan>();
     }
