@@ -5,6 +5,7 @@ using DevExpress.Persistent.BaseImpl.EF;
 using DevExpress.Persistent.BaseImpl.EFCore; 
 using DevExpress.Persistent.Validation;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -47,5 +48,11 @@ namespace DXApplication4.Module.BusinessObjects
         [InverseProperty(nameof(Loan.Kitap))]
         public virtual ObservableCollection<Loan> Loans { get; set; }
             = new ObservableCollection<Loan>();
+
+        [XafDisplayName("Kimde?")]
+        [Browsable(true)]
+        public Member AktifUye =>
+           Loans?.FirstOrDefault(l => l.Durum == LoanDurum.Active)?.Uye;
+
     }
 }

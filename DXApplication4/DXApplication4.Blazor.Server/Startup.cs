@@ -8,6 +8,8 @@ using DXApplication4.Blazor.Server.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.EntityFrameworkCore;
+using DevExpress.ExpressApp;
+using DevExpress.ExpressApp.ConditionalAppearance;
 
 namespace DXApplication4.Blazor.Server
 {
