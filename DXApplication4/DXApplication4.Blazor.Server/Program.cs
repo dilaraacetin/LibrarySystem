@@ -1,21 +1,23 @@
-﻿using System.Reflection;
-using DevExpress.ExpressApp;
-using DevExpress.ExpressApp.Blazor.DesignTime;
-using DevExpress.ExpressApp.Blazor.Services;
+﻿using DevExpress.ExpressApp;
 using DevExpress.ExpressApp.Design;
-using DevExpress.ExpressApp.Utils;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using System;
+using System.Linq;
+using System.Reflection;
 
 namespace DXApplication4.Blazor.Server
 {
     public class Program : IDesignTimeApplicationFactory
     {
-        static bool ContainsArgument(string[] args, string argument)
-        {
-            return args.Any(arg => arg.TrimStart('/').TrimStart('-').ToLower() == argument.ToLower());
-        }
+        static bool HasArg(string[] args, string argument) =>
+            args.Any(arg => arg.TrimStart('/').TrimStart('-')
+                .Equals(argument, StringComparison.OrdinalIgnoreCase));
+
         public static int Main(string[] args)
         {
-            if (ContainsArgument(args, "help") || ContainsArgument(args, "h"))
+            if (HasArg(args, "help") || HasArg(args, "h"))
             {
                 Console.WriteLine("Updates the database when its version does not match the application's version.");
                 Console.WriteLine();
@@ -24,39 +26,42 @@ namespace DXApplication4.Blazor.Server
                 Console.WriteLine("--forceUpdate - Marks that the database must be updated whether its version matches the application's version or not.");
                 Console.WriteLine("--silent - Marks that database update proceeds automatically and does not require any interaction with the user.");
                 Console.WriteLine();
-                Console.WriteLine($"Exit codes: 0 - {DBUpdaterStatus.UpdateCompleted}");
-                Console.WriteLine($"            1 - {DBUpdaterStatus.UpdateError}");
-                Console.WriteLine($"            2 - {DBUpdaterStatus.UpdateNotNeeded}");
+                Console.WriteLine($"Exit codes: 0 - {DevExpress.ExpressApp.Utils.DBUpdaterStatus.UpdateCompleted}");
+                Console.WriteLine($"            1 - {DevExpress.ExpressApp.Utils.DBUpdaterStatus.UpdateError}");
+                Console.WriteLine($"            2 - {DevExpress.ExpressApp.Utils.DBUpdaterStatus.UpdateNotNeeded}");
+                return 0;
             }
-            else
+
+            DevExpress.ExpressApp.FrameworkSettings.DefaultSettingsCompatibilityMode =
+                DevExpress.ExpressApp.FrameworkSettingsCompatibilityMode.Latest;
+            DevExpress.ExpressApp.Security.SecurityStrategy.AutoAssociationReferencePropertyMode =
+                DevExpress.ExpressApp.Security.ReferenceWithoutAssociationPermissionsMode.AllMembers;
+
+            IHost host = CreateHostBuilder(args).Build();
+
+            if (HasArg(args, "updateDatabase"))
             {
-                DevExpress.ExpressApp.FrameworkSettings.DefaultSettingsCompatibilityMode = DevExpress.ExpressApp.FrameworkSettingsCompatibilityMode.Latest;
-                DevExpress.ExpressApp.Security.SecurityStrategy.AutoAssociationReferencePropertyMode = DevExpress.ExpressApp.Security.ReferenceWithoutAssociationPermissionsMode.AllMembers;
-                IHost host = CreateHostBuilder(args).Build();
-                if (ContainsArgument(args, "updateDatabase"))
-                {
-                    using (var serviceScope = host.Services.CreateScope())
-                    {
-                        return serviceScope.ServiceProvider.GetRequiredService<DevExpress.ExpressApp.Utils.IDBUpdater>().Update(ContainsArgument(args, "forceUpdate"), ContainsArgument(args, "silent"));
-                    }
-                }
-                else
-                {
-                    host.Run();
-                }
+                using var scope = host.Services.CreateScope();
+                var updater = scope.ServiceProvider.GetRequiredService<DevExpress.ExpressApp.Utils.IDBUpdater>();
+                return updater.Update(HasArg(args, "forceUpdate"), HasArg(args, "silent"));
             }
+
+            host.Run();
             return 0;
         }
+
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
                 });
+
         XafApplication IDesignTimeApplicationFactory.Create()
         {
             IHostBuilder hostBuilder = CreateHostBuilder(Array.Empty<string>());
-            return DesignTimeApplicationFactoryHelper.Create(hostBuilder);
+            return DevExpress.ExpressApp.Blazor.DesignTime.DesignTimeApplicationFactoryHelper.Create(hostBuilder);
         }
     }
 }
+ 

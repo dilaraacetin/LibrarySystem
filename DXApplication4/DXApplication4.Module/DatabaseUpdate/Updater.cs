@@ -19,59 +19,57 @@ namespace DXApplication4.Module.DatabaseUpdate
             base(objectSpace, currentDBVersion)
         {
         }
+
         public override void UpdateDatabaseAfterUpdateSchema()
         {
             base.UpdateDatabaseAfterUpdateSchema();
-            //string name = "MyName";
-            //EntityObject1 theObject = ObjectSpace.FirstOrDefault<EntityObject1>(u => u.Name == name);
-            //if(theObject == null) {
-            //    theObject = ObjectSpace.CreateObject<EntityObject1>();
-            //    theObject.Name = name;
-            //}
 
-            // The code below creates users and roles for testing purposes only.
-            // In production code, you can create users and assign roles to them automatically, as described in the following help topic:
-            // https://docs.devexpress.com/eXpressAppFramework/119064/data-security-and-safety/security-system/authentication
 #if !RELEASE
-            // If a role doesn't exist in the database, create this role
+
             var defaultRole = CreateDefaultRole();
             var adminRole = CreateAdminRole();
+            var userRole = CreateUserRole();   
 
-            ObjectSpace.CommitChanges(); //This line persists created object(s).
+            ObjectSpace.CommitChanges();
 
             UserManager userManager = ObjectSpace.ServiceProvider.GetRequiredService<UserManager>();
 
-            // If a user named 'User' doesn't exist in the database, create this user
             if (userManager.FindUserByName<ApplicationUser>(ObjectSpace, "User") == null)
             {
-                // Set a password if the standard authentication type is used
                 string EmptyPassword = "";
                 _ = userManager.CreateUser<ApplicationUser>(ObjectSpace, "User", EmptyPassword, (user) =>
                 {
-                    // Add the Users role to the user
                     user.Roles.Add(defaultRole);
                 });
             }
 
-            // If a user named 'Admin' doesn't exist in the database, create this user
             if (userManager.FindUserByName<ApplicationUser>(ObjectSpace, "Admin") == null)
             {
-                // Set a password if the standard authentication type is used
                 string EmptyPassword = "";
                 _ = userManager.CreateUser<ApplicationUser>(ObjectSpace, "Admin", EmptyPassword, (user) =>
                 {
-                    // Add the Administrators role to the user
                     user.Roles.Add(adminRole);
                 });
             }
 
-            ObjectSpace.CommitChanges(); //This line persists created object(s).
+            if (userManager.FindUserByName<ApplicationUser>(ObjectSpace, "kullanici") == null)
+            {
+                string EmptyPassword = "";
+                _ = userManager.CreateUser<ApplicationUser>(ObjectSpace, "kullanici", EmptyPassword, (user) =>
+                {
+                    user.Roles.Add(userRole);
+                });
+            }
+
+            ObjectSpace.CommitChanges();
 #endif
         }
+
         public override void UpdateDatabaseBeforeUpdateSchema()
         {
             base.UpdateDatabaseBeforeUpdateSchema();
         }
+
         PermissionPolicyRole CreateAdminRole()
         {
             PermissionPolicyRole adminRole = ObjectSpace.FirstOrDefault<PermissionPolicyRole>(r => r.Name == "Administrators");
@@ -83,6 +81,7 @@ namespace DXApplication4.Module.DatabaseUpdate
             }
             return adminRole;
         }
+
         PermissionPolicyRole CreateDefaultRole()
         {
             PermissionPolicyRole defaultRole = ObjectSpace.FirstOrDefault<PermissionPolicyRole>(role => role.Name == "Default");
@@ -91,10 +90,22 @@ namespace DXApplication4.Module.DatabaseUpdate
                 defaultRole = ObjectSpace.CreateObject<PermissionPolicyRole>();
                 defaultRole.Name = "Default";
 
-                defaultRole.AddObjectPermissionFromLambda<ApplicationUser>(SecurityOperations.Read, cm => cm.ID == (Guid)CurrentUserIdOperator.CurrentUserId(), SecurityPermissionState.Allow);
+                defaultRole.AddObjectPermissionFromLambda<ApplicationUser>(
+                    SecurityOperations.Read,
+                    cm => cm.ID == (Guid)CurrentUserIdOperator.CurrentUserId(),
+                    SecurityPermissionState.Allow);
+
                 defaultRole.AddNavigationPermission(@"Application/NavigationItems/Items/Default/Items/MyDetails", SecurityPermissionState.Allow);
-                defaultRole.AddMemberPermissionFromLambda<ApplicationUser>(SecurityOperations.Write, "ChangePasswordOnFirstLogon", cm => cm.ID == (Guid)CurrentUserIdOperator.CurrentUserId(), SecurityPermissionState.Allow);
-                defaultRole.AddMemberPermissionFromLambda<ApplicationUser>(SecurityOperations.Write, "StoredPassword", cm => cm.ID == (Guid)CurrentUserIdOperator.CurrentUserId(), SecurityPermissionState.Allow);
+                defaultRole.AddMemberPermissionFromLambda<ApplicationUser>(
+                    SecurityOperations.Write, "ChangePasswordOnFirstLogon",
+                    cm => cm.ID == (Guid)CurrentUserIdOperator.CurrentUserId(),
+                    SecurityPermissionState.Allow);
+
+                defaultRole.AddMemberPermissionFromLambda<ApplicationUser>(
+                    SecurityOperations.Write, "StoredPassword",
+                    cm => cm.ID == (Guid)CurrentUserIdOperator.CurrentUserId(),
+                    SecurityPermissionState.Allow);
+
                 defaultRole.AddTypePermissionsRecursively<PermissionPolicyRole>(SecurityOperations.Read, SecurityPermissionState.Deny);
                 defaultRole.AddObjectPermission<ModelDifference>(SecurityOperations.ReadWriteAccess, "UserId = ToStr(CurrentUserId())", SecurityPermissionState.Allow);
                 defaultRole.AddObjectPermission<ModelDifferenceAspect>(SecurityOperations.ReadWriteAccess, "Owner.UserId = ToStr(CurrentUserId())", SecurityPermissionState.Allow);
@@ -102,6 +113,28 @@ namespace DXApplication4.Module.DatabaseUpdate
                 defaultRole.AddTypePermissionsRecursively<ModelDifferenceAspect>(SecurityOperations.Create, SecurityPermissionState.Allow);
             }
             return defaultRole;
+        }
+
+        PermissionPolicyRole CreateUserRole()
+        {
+            var role = ObjectSpace.FirstOrDefault<PermissionPolicyRole>(r => r.Name == "Kullanıcı");
+            if (role == null)
+            {
+                role = ObjectSpace.CreateObject<PermissionPolicyRole>();
+                role.Name = "Kullanıcı";
+
+                role.AddTypePermissionsRecursively<Book>(SecurityOperations.Read, SecurityPermissionState.Allow);
+
+                role.AddTypePermissionsRecursively<Loan>(SecurityOperations.Read, SecurityPermissionState.Allow);
+                role.AddTypePermissionsRecursively<Loan>(SecurityOperations.Create, SecurityPermissionState.Allow);
+                role.AddTypePermissionsRecursively<Loan>(SecurityOperations.Write, SecurityPermissionState.Allow);
+                role.AddTypePermissionsRecursively<Loan>(SecurityOperations.Delete, SecurityPermissionState.Deny);
+
+                role.AddTypePermissionsRecursively<Member>(SecurityOperations.Read, SecurityPermissionState.Allow);
+
+                role.AddNavigationPermission(@"Application/NavigationItems/Items/Library", SecurityPermissionState.Allow);
+            }
+            return role;
         }
     }
 }

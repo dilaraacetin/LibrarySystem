@@ -8,7 +8,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-// System.ComponentModel.DataAnnotations.Required ile XAF Model.Required çakışmasın diye:
 using DARequired = System.ComponentModel.DataAnnotations.RequiredAttribute;
 
 namespace DXApplication4.Module.BusinessObjects
