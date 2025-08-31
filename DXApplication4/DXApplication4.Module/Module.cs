@@ -39,7 +39,7 @@ namespace DXApplication4.Module
         public override void Setup(XafApplication application)
         {
             base.Setup(application);
-            // Manage various aspects of the application UI and behavior at the module level.
+            XafTypesInfo.Instance.RegisterEntity(typeof(Dashboards.LibraryDashboard));
         }
     }
 }
