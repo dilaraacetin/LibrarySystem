@@ -1,5 +1,4 @@
-﻿using System.ComponentModel;
-using DevExpress.ExpressApp;
+﻿using DevExpress.ExpressApp;
 using DevExpress.ExpressApp.Actions;
 using DevExpress.ExpressApp.DC;
 using DevExpress.ExpressApp.Editors;
@@ -9,6 +8,8 @@ using DevExpress.ExpressApp.Model.DomainLogics;
 using DevExpress.ExpressApp.Model.NodeGenerators;
 using DevExpress.ExpressApp.Updating;
 using DevExpress.Persistent.Base;
+using DevExpress.Persistent.BaseImpl.EF;
+using System.ComponentModel;
 
 namespace DXApplication4.Module
 {
@@ -20,6 +21,7 @@ namespace DXApplication4.Module
             //
             // DXApplication4Module
             //
+            AdditionalExportedTypes.Add(typeof(FileData));
             AdditionalExportedTypes.Add(typeof(DXApplication4.Module.BusinessObjects.ApplicationUser));
             AdditionalExportedTypes.Add(typeof(DevExpress.Persistent.BaseImpl.EF.PermissionPolicy.PermissionPolicyRole));
             AdditionalExportedTypes.Add(typeof(DevExpress.Persistent.BaseImpl.EF.ModelDifference));
@@ -41,5 +43,7 @@ namespace DXApplication4.Module
             base.Setup(application);
             XafTypesInfo.Instance.RegisterEntity(typeof(Dashboards.LibraryDashboard));
         }
+        
+
     }
 }
